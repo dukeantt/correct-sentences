@@ -2,10 +2,31 @@ import pickle
 import pandas as pd
 import string
 import operator
+import copy
+import unidecode
+
+
+def calculate_point(char_index, point=None, keep_going_deeper = True):
+    if point is None:
+        point = {}
+    if char_index + 2 == len(input_text) or not keep_going_deeper:
+        keep_going_deeper = False
+        next_char_x = input_text[char_index + 1]
+        char_x = input_text[char_index]
+        next_char_prob = data[char_x]
+        next_char_prob.sort(key=operator.itemgetter(1), reverse=True)
+        next_char_variation = vnmese_alphabet_dict[next_char_x]
+        for i1, v1 in enumerate(next_char_prob):
+            for i2, v2 in enumerate(next_char_variation):
+                if v1[0] == v2:
+                    point[v2] = v1[1]
+        return point
+    return calculate_point(char_index + 1, point,keep_going_deeper)
 
 
 def split_sentence_to_char(word):
     return [char for char in word]
+
 
 def represents_int(s):
     try:
@@ -14,10 +35,12 @@ def represents_int(s):
     except ValueError:
         return False
 
+
 # input_text = "shop co ghe ăn dam ko ?"
 # input_text = "bo ban ghe nay gia bn vay shop"
 # input_text = "cái jumperoo đo có nhạc k bạn nhỉ"
 input_text = "em oi, 2tuan nua hang ve. Vay e có hỏi luon giup chị vụ tấm chắn phía sau xích đu lun dc ko?"
+# input_text = " nua hang ve"
 input_text = input_text.lower()
 
 with open('characters.pkl', 'rb') as f:
@@ -64,12 +87,14 @@ for index, char in enumerate(input_text_list):
     if first_char:
         output_text.append(char)
         first_char = False
+
     if char in string.punctuation or represents_int(char):
         # output_text.append(char)
         continue
     elif char != " ":
         list_characters_standing_next_to = data[char]
-        list_characters_standing_next_to.sort(key = operator.itemgetter(1), reverse = True)
+        list_characters_standing_next_to.sort(key=operator.itemgetter(1), reverse=True)
+
         try:
             next_char = input_text_list[index + 1]
         except IndexError:
@@ -78,6 +103,7 @@ for index, char in enumerate(input_text_list):
             next_next_char = input_text_list[index + 2]
         except IndexError:
             next_next_char = ' '
+
         if next_char == list_characters_standing_next_to[0][0]:
             output_text.append(next_char)
         elif next_char != " ":
@@ -125,5 +151,51 @@ for index, char in enumerate(input_text_list):
         output_text.append(" ")
         output_text.append(input_text_list[index + 1])
 
+
 output_text = ''.join(output_text)
+output_text_list = output_text.split()
+for i in range(len(output_text_list)):
+    replace_word_list = []
+    word = output_text_list[i]
+    if i + 1 < len(output_text_list):
+        next_word = output_text_list[i + 1]
+        next_word = unidecode.unidecode(next_word)
+        try:
+            next_word_prob = word_data[word]
+        except KeyError:
+            continue
+        next_word_prob.sort(key=operator.itemgetter(1), reverse=True)
+        for index, value in enumerate(next_word_prob):
+            value_x = value[0]
+            value_x = unidecode.unidecode(value_x)
+            if value_x == next_word:
+                replace_word_list.append(value[0])
+    if len(replace_word_list) > 0:
+        output_text_list[i + 1] = replace_word_list[0]
+
+output_text = ' '.join(output_text_list)
+x = 0
+
+for word in input_text.split():
+    the_big_point_dict = {}
+    word_chars = split_sentence_to_char(word)
+    word_chars.reverse()
+    for char_index, word_char in enumerate(word_chars):
+        the_small_point_dict = {}
+        if char_index + 1 < len(word_chars):
+            previous_char = word_chars[char_index + 1]
+            next_char_prob = data[previous_char]
+            char_variations = vnmese_alphabet_dict[word_char]
+            for i1,v1 in enumerate(char_variations):
+                for i2,v2 in enumerate(next_char_prob):
+                    if v1 == v2[0]:
+                        the_small_point_dict[v1] = v2[1]
+        the_small_point_dict = {k: v for k, v in reversed(sorted(the_small_point_dict.items(), key=lambda item: item[1]))}
+        the_big_point_dict['loop'+str(char_index)] = the_small_point_dict
+
+    for index, value in the_big_point_dict.items():
+        y= 0
+    x = 0
+
+
 x = 0
