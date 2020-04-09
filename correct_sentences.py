@@ -34,6 +34,14 @@ def split_word_n_number(s):
     return head, tail
 
 
+def compare(a, b):
+    i = 0
+    for x, y in zip(a, b):
+        if x == y:
+            i += 1
+    return i / len(b) * 100
+
+
 def split_sentence_to_char(word):
     return [char for char in word]
 
@@ -46,11 +54,27 @@ def represents_int(s):
         return False
 
 
-# input_text = "shop co ghe ăn dam ko ?"
-# input_text = "bo ban ghe nay gia bn vay shop"
-# input_text = "cái jumperoo đo có nhạc k bạn nhỉ"
-input_text = "em oi, 2tuan nua hang ve. Vay e có hỏi luon giup chị vụ tấm chắn phía sau xích đu lun dc ko?"
-# input_text = "tuan"
+# input_text = "shop co ghe ăn dam ko ?" #work
+# input_text = "cái jumperoo đo có nhạc k bạn nhỉ" #work
+# input_text = "em oi, 2tuan nua hang ve. Vay e có hỏi luon giup chị vụ tấm chắn phía sau xích đu lun dc ko?"
+# input_text = "cho e xem loại nào gỗý chị"
+# input_text = "À b báo cho m giá ghế ăn nhé" #work
+# input_text = "À bộ quây bóng cả bộ xích đu ngựa bjo là bn tiền vậy b" #work
+# input_text = "À cho mình hỏi giá thảm chơi xpe loại 1m5" #work
+# input_text = "alo e đã mua máy hút sữa của c thấy ưng lém nên mún hỏi c tư vấn cho cai gh rung của em bé" #work
+# input_text = "cho mình 1 cái 1m8 1 cái 2m nhé" #work
+# input_text = "b ơi cho t hỏi chút t chưa lấy gh vì muốn qua tận nơi t muốn mua gh rung hoặc nôi cho bé" #work
+# input_text = "thêm bé nhà t 7 tháng r nhưng ngủ giấc r ngắn toàn b trên tay mới ngủ h bé hơn 8kg r t định thử mua nôi r đặt ch độ rung xem con có ngủ đc ko" #work
+# input_text = "shop oi minh mua 1 cai mau nau nha" #work
+# input_text = "tư vấn giúp em túi hâm sữa babymoov ạ." #work
+# input_text = "À còn có dễ dàng mang theo du lịch k ai" # not work
+# input_text = "À bạn ơi nôi Valdera nhà bạn bao nhiêu vậy?" #not work
+# input_text = "bo ban ghe nay gia bn vay shop" #not work
+# input_text = "790 phai ko ban. co tinh tien ship ko" #work
+# input_text = "7 thang da ngoi dc chua ah shop?" #work
+input_text = "Shop cos ghees an mastela ko?" #work
+input_text = "Shop có ghế an mastela ko?" #work
+
 input_text = input_text.lower()
 
 with open('characters.pkl', 'rb') as f:
@@ -168,15 +192,18 @@ for index, char in enumerate(input_text_list):
             x = 0
     else:
         output_text.append(" ")
-        output_text.append(input_text_list[index + 1])
+        if index + 1 < len(input_text_list):
+            output_text.append(input_text_list[index + 1])
 
 output_text = ''.join(output_text)
 output_text_list = output_text.split()
 for index, value in enumerate(output_text_list):
-    if not value.isalpha():
-        value1, value2 = split_word_n_number(value)
-        output_text_list[index] = value1
-        output_text_list.insert(index + 1, value2)
+    if not (represents_int(value[0]) and represents_int(value[-1])):
+        if not represents_int(value):
+            if not value.isalpha():
+                value1, value2 = split_word_n_number(value)
+                output_text_list[index] = value1
+                output_text_list.insert(index + 1, value2)
 
 
 
@@ -195,13 +222,20 @@ for i in range(len(output_text_list)):
             value_x = value[0]
             value_x = unidecode.unidecode(value_x)
             if value_x == next_word:
+                # replace_word_list.append(value[0])
+                replace_word_list.insert(-2, value[0])
+                break
+            elif compare(next_word,value_x) > 66.5 and compare(next_word,value_x) <= 100 and len(next_word) < len(value_x):
                 replace_word_list.append(value[0])
+
     if len(replace_word_list) > 0:
         output_text_list[i + 1] = replace_word_list[0]
 
 output_text = ' '.join(output_text_list)
 x = 0
-
+'em oi, 2tuan nua hang ve. Vay e có hỏi luon giup chị vụ tấm chắn phía sau xích đu lun dc ko?'
+'em ơi 2 tuần nữa hàng về vậy e có hỏi luôn giúp chị vụ tấm chắn phía sau xích đu lùn dc ko'
+'em ơi 2 tuần nữa hàng về vậy e còn hỏi luôn giúp chị vừa tấm chắn phía sau xích đu lùn dc ko'
 # for word in input_text.split():
 #     the_big_point_dict = {}
 #     word_chars = split_sentence_to_char(word)
@@ -224,4 +258,3 @@ x = 0
 #     x = 0
 
 
-x = 0
