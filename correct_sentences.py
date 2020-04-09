@@ -16,6 +16,9 @@ input_text = input_text.lower()
 
 with open('characters.pkl', 'rb') as f:
     data = pickle.load(f)
+
+with open('words_prob.pkl', 'rb') as f:
+    word_data = pickle.load(f)
 chars_in_dict = list(data.keys())
 vnmese_alphabet_dict = {
     'a': ['a', 'à', 'ả', 'ã', 'á', 'ạ', 'ă', 'ằ', 'ẳ', 'ẵ', 'ắ', 'ặ', 'â', 'ầ', 'ẩ', 'ẫ', 'ấ', 'ậ'],
@@ -50,11 +53,13 @@ input_text_list = split_sentence_to_char(input_text)
 first_char = True
 
 for index, char in enumerate(input_text_list):
+
     if first_char:
         output_text.append(char)
         first_char = False
+
+
     if char in string.punctuation:
-        # output_text.append(char)
         continue
     elif char != " ":
         list_characters_standing_next_to = data[char]
