@@ -6,7 +6,7 @@ import copy
 import unidecode
 
 
-def calculate_point(char_index, point=None, keep_going_deeper = True):
+def calculate_point(char_index, point=None, keep_going_deeper=True):
     if point is None:
         point = {}
     if char_index + 2 == len(input_text) or not keep_going_deeper:
@@ -21,7 +21,17 @@ def calculate_point(char_index, point=None, keep_going_deeper = True):
                 if v1[0] == v2:
                     point[v2] = v1[1]
         return point
-    return calculate_point(char_index + 1, point,keep_going_deeper)
+    return calculate_point(char_index + 1, point, keep_going_deeper)
+
+def split_word_n_number(s):
+    # number after word
+    head = s.rstrip('0123456789')
+    tail = s[len(head):]
+    if head == '' or tail == '':
+        # number before word
+        tail = s.lstrip('0123456789')
+        head = s.replace(tail,'')
+    return head, tail
 
 
 def split_sentence_to_char(word):
@@ -40,7 +50,7 @@ def represents_int(s):
 # input_text = "bo ban ghe nay gia bn vay shop"
 # input_text = "cái jumperoo đo có nhạc k bạn nhỉ"
 input_text = "em oi, 2tuan nua hang ve. Vay e có hỏi luon giup chị vụ tấm chắn phía sau xích đu lun dc ko?"
-# input_text = " nua hang ve"
+# input_text = "tuan"
 input_text = input_text.lower()
 
 with open('characters.pkl', 'rb') as f:
@@ -84,42 +94,50 @@ first_char = True
 
 for index, char in enumerate(input_text_list):
     final_point = {}
-    if first_char:
+    if first_char: # if first char append immediately to list
         output_text.append(char)
         first_char = False
-
-    if char in string.punctuation or represents_int(char):
-        # output_text.append(char)
+    if char in string.punctuation or represents_int(char): # if number or punctuation append immediately to list
+        if index + 1 < len(input_text_list):
+            output_text.append(input_text_list[index + 1]) # append the character after number or punctuation to list
         continue
-    elif char != " ":
+    elif char != " ": # if character is alpha
+        # list of character prob
         list_characters_standing_next_to = data[char]
         list_characters_standing_next_to.sort(key=operator.itemgetter(1), reverse=True)
 
-        try:
+        # check if there is character after 1 anh 2 index
+        if index + 1 < len(input_text_list):
             next_char = input_text_list[index + 1]
-        except IndexError:
+            if index + 2 < len(input_text_list):
+                next_next_char = input_text_list[index + 2]
+            else:
+                next_next_char = ' '
+        else:
             continue
-        try:
-            next_next_char = input_text_list[index + 2]
-        except IndexError:
-            next_next_char = ' '
 
+        # if the following character have the highest prob append to list immediately
         if next_char == list_characters_standing_next_to[0][0]:
             output_text.append(next_char)
-        elif next_char != " ":
+        elif next_char != " ": # if not compare the list with the vnmese alphabet
             try:
-                chars_in_vn_alphabet = vnmese_alphabet_dict[next_char]
+                chars_in_vn_alphabet = vnmese_alphabet_dict[next_char] # get vnmese for specific char
             except KeyError:
-                output_text.append(next_char)
+                output_text.append(next_char) # if cant find vnmese for char -> append
                 continue
+
             order_dict = {}
+            # loop vnmese alphabet
             for i, char_in_alphabet in enumerate(chars_in_vn_alphabet):
                 semi_final_point = {}
                 semi_final_point[char_in_alphabet] = 0
                 try:
-                    list_characters_standing_next_to_2 = data[char_in_alphabet]
+                    list_characters_standing_next_to_2 = data[char_in_alphabet] ## list of next char prob for each char in vnmese alphabet
+                    list_characters_standing_next_to_2.sort(key=operator.itemgetter(1), reverse=True)
                 except:
                     list_characters_standing_next_to_2 = []
+
+                # compare the char in vnmese alphabet with list of next char prob if equal set the point for char in vnmese bet
                 for i2, char_next_to in enumerate(list_characters_standing_next_to):
                     if char_in_alphabet == char_next_to[0]:
                         point = char_next_to[1]
@@ -129,6 +147,7 @@ for index, char in enumerate(input_text_list):
                     else:
                         semi_final_point[char_in_alphabet] = 0
 
+                ## second loop same as first loop but for the next char and the char after it
                 for i3, char_next_next_to in enumerate(list_characters_standing_next_to_2):
                     if next_next_char == char_next_next_to[0]:
                         point = char_next_next_to[1]
@@ -138,7 +157,7 @@ for index, char in enumerate(input_text_list):
                             final_point[char_in_alphabet] = 0
 
             final_point = {k: v for k, v in reversed(sorted(final_point.items(), key=lambda item: item[1]))}
-            if (len(order_dict) != 0):
+            if (len(order_dict) != 0 and len(final_point) != 0):
                 sorted_order_dict = {k: v for k, v in sorted(order_dict.items(), key=lambda item: item[1])}
                 sorted_order_dict_first_char = list(sorted_order_dict.keys())[0]
                 # output_text.append(sorted_order_dict_first_char)
@@ -151,9 +170,16 @@ for index, char in enumerate(input_text_list):
         output_text.append(" ")
         output_text.append(input_text_list[index + 1])
 
-
 output_text = ''.join(output_text)
 output_text_list = output_text.split()
+for index, value in enumerate(output_text_list):
+    if not value.isalpha():
+        value1, value2 = split_word_n_number(value)
+        output_text_list[index] = value1
+        output_text_list.insert(index + 1, value2)
+
+
+
 for i in range(len(output_text_list)):
     replace_word_list = []
     word = output_text_list[i]
@@ -176,26 +202,26 @@ for i in range(len(output_text_list)):
 output_text = ' '.join(output_text_list)
 x = 0
 
-for word in input_text.split():
-    the_big_point_dict = {}
-    word_chars = split_sentence_to_char(word)
-    word_chars.reverse()
-    for char_index, word_char in enumerate(word_chars):
-        the_small_point_dict = {}
-        if char_index + 1 < len(word_chars):
-            previous_char = word_chars[char_index + 1]
-            next_char_prob = data[previous_char]
-            char_variations = vnmese_alphabet_dict[word_char]
-            for i1,v1 in enumerate(char_variations):
-                for i2,v2 in enumerate(next_char_prob):
-                    if v1 == v2[0]:
-                        the_small_point_dict[v1] = v2[1]
-        the_small_point_dict = {k: v for k, v in reversed(sorted(the_small_point_dict.items(), key=lambda item: item[1]))}
-        the_big_point_dict['loop'+str(char_index)] = the_small_point_dict
-
-    for index, value in the_big_point_dict.items():
-        y= 0
-    x = 0
+# for word in input_text.split():
+#     the_big_point_dict = {}
+#     word_chars = split_sentence_to_char(word)
+#     word_chars.reverse()
+#     for char_index, word_char in enumerate(word_chars):
+#         the_small_point_dict = {}
+#         if char_index + 1 < len(word_chars):
+#             previous_char = word_chars[char_index + 1]
+#             next_char_prob = data[previous_char]
+#             char_variations = vnmese_alphabet_dict[word_char]
+#             for i1,v1 in enumerate(char_variations):
+#                 for i2,v2 in enumerate(next_char_prob):
+#                     if v1 == v2[0]:
+#                         the_small_point_dict[v1] = v2[1]
+#         the_small_point_dict = {k: v for k, v in reversed(sorted(the_small_point_dict.items(), key=lambda item: item[1]))}
+#         the_big_point_dict['loop'+str(char_index)] = the_small_point_dict
+#
+#     for index, value in the_big_point_dict.items():
+#         y= 0
+#     x = 0
 
 
 x = 0
