@@ -2,7 +2,7 @@ import pickle
 import pandas as pd
 import string
 import operator
-
+import unidecode
 
 def split_sentence_to_char(word):
     return [char for char in word]
@@ -93,4 +93,25 @@ for index, char in enumerate(input_text_list):
         output_text.append(input_text_list[index + 1])
 
 output_text = ''.join(output_text)
+output_text_list = output_text.split()
+for i in range(len(output_text_list)):
+    replace_word_list = []
+    word = output_text_list[i]
+    if i + 1 < len(output_text_list):
+        next_word = output_text_list[i + 1]
+        next_word = unidecode.unidecode(next_word)
+        try:
+            next_word_prob = word_data[word]
+        except KeyError:
+            continue
+        next_word_prob.sort(key=operator.itemgetter(1), reverse=True)
+        for index, value in enumerate(next_word_prob):
+            value_x = value[0]
+            value_x = unidecode.unidecode(value_x)
+            if value_x == next_word:
+                replace_word_list.append(value[0])
+    if len(replace_word_list) > 0:
+        output_text_list[i + 1] = replace_word_list[0]
+
+output_text = ' '.join(output_text_list)
 x = 0
